@@ -1,0 +1,87 @@
+# ======================
+# 🔧 Configuração geral
+# ======================
+
+server:
+  port: 8085
+
+spring:
+  application:
+    name: create-people
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # ✅ Cria/tenta atualizar tabelas automaticamente
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher # compatibilidade com Feign
+  jackson:
+    serialization:
+      indent_output: true
+  devtools:
+    restart:
+      enabled: true
+
+# ============================
+# 🔐 JWT (Token Secret Key)
+# ============================
+
+jwt:
+  secret: "umaSenhaMuitoSeguraParaJWT123456!"
+
+# =====================
+# 🌎 Mensagens i18n
+# =====================
+
+spring.messages:
+  basename: messages/messages
+  encoding: UTF-8
+  fallback-to-system-locale: false
+  cache-duration: 10
+
+# ============================
+# ☁️ OpenFeign (Authentication)
+# ============================
+
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: basic
+  okhttp:
+    enabled: true
+  httpclient:
+    enabled: false
+
+# ===================
+# 🔄 Cloud Discovery
+# ===================
+
+spring.cloud:
+  openfeign:
+    circuitbreaker:
+      enabled: true
+  loadbalancer:
+    ribbon:
+      enabled: false
+# ============================
+# 🗺️ Geocoding Configuration
+# ============================
+geocoding:
+  api:
+    url: "https://maps.googleapis.com/maps/api/geocode/json"
+    key: "AIzaSyA3jbxRsV1FSjXQYD3g5rYjvoKt9yI4ZkQ"
+    timeout: 5000
+    retries: 3
+    initialInterval: 1000 # ✅
+    maxInterval: 5000     # ✅
+    maxAttempts: 3        # ✅
