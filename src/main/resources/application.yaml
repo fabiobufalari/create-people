@@ -1,9 +1,15 @@
+# ===================
+# ⚙️ Server Port
+# ===================
+server:
+  port: 8085 # Define a porta do servidor para 8085
+
 # ======================
 # 🔧 Configuração geral
 # ======================
-
-server:
-  port: 8085
+authentication:
+  service:
+    url: http://localhost:8083 # Define a porta do Authenticador para 8083
 
 spring:
   application:
@@ -36,7 +42,7 @@ spring:
 # ============================
 
 jwt:
-  secret: "umaSenhaMuitoSeguraParaJWT123456!"
+  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970!"
 
 # =====================
 # 🌎 Mensagens i18n
@@ -85,3 +91,8 @@ geocoding:
     initialInterval: 1000 # ✅
     maxInterval: 5000     # ✅
     maxAttempts: 3        # ✅
+
+logging:
+  level:
+    org.springframework: INFO
+    com.bufalari: DEBUG
