@@ -1,98 +1,94 @@
-# ===================
-# ⚙️ Server Port
-# ===================
+# =========================================
+# Server Configuration
+# =========================================
 server:
-  port: 8085 # Define a porta do servidor para 8085
+  port: 8085 # Porta deste serviço (exemplo)
 
-# ======================
-# 🔧 Configuração geral
-# ======================
-authentication:
-  service:
-    url: http://localhost:8083 # Define a porta do Authenticador para 8083
-
+# =========================================
+# Spring Boot Application Configuration
+# =========================================
 spring:
   application:
-    name: create-people
+    name: create-people-service # Nome mais descritivo
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/buildingDB # <<< BANCO CENTRALIZADO
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update # ✅ Cria/tenta atualizar tabelas automaticamente
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  mvc:
-    pathmatch:
-      matching-strategy: ant_path_matcher # compatibilidade com Feign
-  jackson:
-    serialization:
-      indent_output: true
-  devtools:
-    restart:
-      enabled: true
+  messages: # Configuração i18n (se mantida)
+    basename: messages/messages # Verificar caminho
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
-# ============================
-# 🔐 JWT (Token Secret Key)
-# ============================
+# =========================================
+# External Service URLs
+# =========================================
+authentication: # Nome da propriedade para auth service url
+  service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8083/api} # URL do Authentication Service
 
-jwt:
-  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970!"
+# =========================================
+# JWT Configuration (Este serviço VALIDA) - Ajustado para o padrão
+# =========================================
+security:
+  jwt:
+    token:
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970!} # <<< CHAVE IDÊNTICA
+# Remover config antiga jwt.secret se não for mais usada
+# jwt:
+#  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970!" # Removido/Comentado
 
-# =====================
-# 🌎 Mensagens i18n
-# =====================
-
-spring.messages:
-  basename: messages/messages
-  encoding: UTF-8
-  fallback-to-system-locale: false
-  cache-duration: 10
-
-# ============================
-# ☁️ OpenFeign (Authentication)
-# ============================
-
-feign:
-  client:
-    config:
-      default:
-        loggerLevel: basic
-  okhttp:
-    enabled: true
-  httpclient:
-    enabled: false
-
-# ===================
-# 🔄 Cloud Discovery
-# ===================
-
-spring.cloud:
-  openfeign:
-    circuitbreaker:
-      enabled: true
-  loadbalancer:
-    ribbon:
-      enabled: false
-# ============================
-# 🗺️ Geocoding Configuration
-# ============================
+# =========================================
+# Geocoding Configuration
+# =========================================
 geocoding:
   api:
     url: "https://maps.googleapis.com/maps/api/geocode/json"
-    key: "AIzaSyA3jbxRsV1FSjXQYD3g5rYjvoKt9yI4ZkQ"
+    key: ${GEOCODING_API_KEY:AIzaSyA3jbxRsV1FSjXQYD3g5rYjvoKt9yI4ZkQ} # Usar variável de ambiente é melhor
     timeout: 5000
     retries: 3
-    initialInterval: 1000 # ✅
-    maxInterval: 5000     # ✅
-    maxAttempts: 3        # ✅
+    initialInterval: 1000
+    maxInterval: 5000
+    maxAttempts: 3 # Revisar se é 3 ou 4 (1 initial + retries)
 
+# =========================================
+# Logging Configuration
+# =========================================
 logging:
   level:
-    org.springframework: INFO
-    com.bufalari: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    com.bufalari.people: DEBUG # Pacote raiz deste serviço
+    org.hibernate.SQL: DEBUG
+
+# =========================================
+# Swagger/OpenAPI Configuration
+# =========================================
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# =========================================
+# Actuator Configuration
+# =========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when_authorized
