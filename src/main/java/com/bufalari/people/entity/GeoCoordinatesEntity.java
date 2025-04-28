@@ -1,5 +1,6 @@
 package com.bufalari.people.entity;
 
+import com.bufalari.people.auditing.AuditableBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Data;

@@ -1,5 +1,6 @@
 package com.bufalari.people.entity;
 
+import com.bufalari.people.auditing.AuditableBaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "companies") // Define table name
-public class CompanyEntity {
+public class CompanyEntity extends AuditableBaseEntity {
 
     @Id
     // If IDs are manually set in DataLoader, remove GeneratedValue or use appropriate strategy

@@ -18,7 +18,8 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    //@Value("${jwt.secret}")
+    @Value("${security.jwt.token.secret-key}")
     private String secretKeyString; // Renamed to avoid confusion with Key type
 
     private Key signInKey; // Store the initialized key

@@ -1,5 +1,6 @@
 package com.bufalari.people.entity;
 
+import com.bufalari.people.auditing.AuditableBaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +19,7 @@ import java.util.List;
 @Table(name = "groups", uniqueConstraints = {
         @UniqueConstraint(columnNames = "name", name = "uk_group_name") // Explicit unique constraint name
 })
-public class GroupEntity {
+public class GroupEntity extends AuditableBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

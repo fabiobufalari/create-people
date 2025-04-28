@@ -1,5 +1,6 @@
 package com.bufalari.people.entity;
 
+import com.bufalari.people.auditing.AuditableBaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,7 +17,7 @@ import lombok.*;
     // Ensure name is unique within the *same* group
     @UniqueConstraint(columnNames = {"name", "group_id"}, name = "uk_subgroup_name_group")
 })
-public class SubGroupEntity {
+public class SubGroupEntity extends AuditableBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
