@@ -4,29 +4,36 @@ import com.bufalari.people.dto.PersonDTO;
 import com.bufalari.people.entity.GeoCoordinatesEntity;
 import com.bufalari.people.entity.PersonEntity;
 import com.bufalari.people.util.MapLinkGenerator;
+import org.slf4j.Logger; // Importar Logger
+import org.slf4j.LoggerFactory; // Importar LoggerFactory
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID; // <<<--- IMPORT UUID
 
 /**
- * Converts between PersonEntity and PersonDTO.
+ * Converts between PersonEntity (with UUID ID) and PersonDTO (with UUID ID).
+ * Converte entre PersonEntity (com ID UUID) e PersonDTO (com ID UUID).
  */
 @Component
 public class PersonConverter {
 
+    private static final Logger log = LoggerFactory.getLogger(PersonConverter.class);
+
     /**
      * Converts PersonDTO to PersonEntity.
-     * Note: Group and SubGroup need to be set separately in the service layer.
-     * GeoCoordinates are also typically handled during creation/update logic.
+     * Note: Group, SubGroup, and GeoCoordinates need to be set separately in the service layer.
+     * Converte PersonDTO para PersonEntity.
+     * Nota: Group, SubGroup e GeoCoordinates precisam ser definidos separadamente na camada de serviço.
      */
     public PersonEntity dtoToEntity(PersonDTO dto) {
         if (dto == null) {
             return null;
         }
         return PersonEntity.builder()
-                .id(dto.getId()) // Keep ID for updates
-                .fullName(dto.getName()) // Map 'name' from DTO to 'fullName' in Entity
+                .id(dto.getId()) // <<<--- UUID (Mantém para updates)
+                .fullName(dto.getName()) // <<<--- Mapeia 'name' do DTO para 'fullName'
                 .document(dto.getDocument())
                 .email(dto.getEmail())
                 .phone(dto.getPhone())
@@ -37,22 +44,25 @@ public class PersonConverter {
                 .province(dto.getProvince())
                 .country(dto.getCountry())
                 .postalCode(dto.getPostalCode())
-                .companyId(dto.getCompanyId())
-                // Group, SubGroup, and GeoCoordinates are set in the service
+                .companyId(dto.getCompanyId()) // <<<--- UUID
+                // Group, SubGroup e GeoCoordinates são definidos no serviço
+                .deleted(false) // Garante que não está deletado ao converter do DTO
                 .build();
     }
 
     /**
      * Converts PersonEntity to PersonDTO.
      * Populates groupName, subGroupName, and mapLinks.
+     * Converte PersonEntity para PersonDTO.
+     * Preenche groupName, subGroupName e mapLinks.
      */
     public PersonDTO entityToDTO(PersonEntity entity) {
         if (entity == null) {
             return null;
         }
         PersonDTO dto = PersonDTO.builder()
-                .id(entity.getId())
-                .name(entity.getFullName()) // Map 'fullName' from Entity to 'name' in DTO
+                .id(entity.getId()) // <<<--- UUID
+                .name(entity.getFullName()) // <<<--- Mapeia 'fullName' para 'name' no DTO
                 .document(entity.getDocument())
                 .email(entity.getEmail())
                 .phone(entity.getPhone())
@@ -63,36 +73,35 @@ public class PersonConverter {
                 .province(entity.getProvince())
                 .country(entity.getCountry())
                 .postalCode(entity.getPostalCode())
-                .companyId(entity.getCompanyId())
+                .companyId(entity.getCompanyId()) // <<<--- UUID
+                // IDs de Group/SubGroup e Nomes são preenchidos abaixo
                 .build();
 
-
-        // Populate Group info
+        // Preenche informações do Grupo
         if (entity.getGroup() != null) {
-            dto.setGroupId(entity.getGroup().getId());
+            dto.setGroupId(entity.getGroup().getId()); // <<<--- UUID
             dto.setGroupName(entity.getGroup().getName());
         }
 
-        // Populate SubGroup info
+        // Preenche informações do SubGrupo
         if (entity.getSubGroup() != null) {
-            dto.setSubGroupId(entity.getSubGroup().getId());
+            dto.setSubGroupId(entity.getSubGroup().getId()); // <<<--- UUID
             dto.setSubGroupName(entity.getSubGroup().getName());
         }
 
-        // Populate Map Links if coordinates exist
+        // Preenche links de mapa se houver coordenadas
         GeoCoordinatesEntity coordinates = entity.getGeoCoordinates();
         if (coordinates != null && coordinates.getLatitude() != null && coordinates.getLongitude() != null) {
-             try {
+            try {
                 Map<String, String> links = MapLinkGenerator.generateMapLinks(
                         coordinates.getLatitude(),
                         coordinates.getLongitude()
                 );
-                dto.setMapLinks(links); // Set the map
-             } catch (Exception e) {
-                 // Log error if link generation fails, but don't break the conversion
-                 System.err.println("Error generating map links: " + e.getMessage()); // Replace with proper logging
-             }
-
+                dto.setMapLinks(links); // Define o mapa de links
+            } catch (Exception e) {
+                // Loga o erro mas não impede a conversão
+                log.error("Error generating map links for person ID {}: {}", entity.getId(), e.getMessage());
+            }
         }
 
         return dto;

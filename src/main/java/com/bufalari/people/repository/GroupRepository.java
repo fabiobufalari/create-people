@@ -5,12 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID; // <<<--- IMPORT UUID
 
 /**
- * Repository for accessing Group data.
+ * Repository for accessing Group data (using UUID).
+ * Repositório para acessar dados de Grupo (usando UUID).
  */
 @Repository
-public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
+public interface GroupRepository extends JpaRepository<GroupEntity, UUID> { // <<<--- Alterado para UUID
 
     /**
      * Finds a group by its unique name.
@@ -25,4 +27,6 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
      * @return true if a group with that name exists, false otherwise.
      */
     boolean existsByName(String name);
+
+    // existsById(UUID id) é herdado do JpaRepository
 }

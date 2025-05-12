@@ -8,6 +8,7 @@ import java.util.List;
 public class GeocodingResponseDTO {
     private List<Result> results;
     private String status;
+    private String error_message;
 
     @Data
     public static class Result {

@@ -18,14 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID; // <<<--- IMPORT UUID
 import java.util.stream.Collectors;
 
 /**
- * Service layer for managing SubGroup entities.
+ * Service layer for managing SubGroup entities (using UUID).
+ * Camada de serviço para gerenciar entidades SubGroup (usando UUID).
  */
 @Service
-@RequiredArgsConstructor
-@Transactional
+@RequiredArgsConstructor // Injeta dependências finais
+@Transactional // Transacionalidade padrão
 public class SubGroupService {
 
     private static final Logger log = LoggerFactory.getLogger(SubGroupService.class);
@@ -37,46 +39,49 @@ public class SubGroupService {
 
     /**
      * Creates a new subgroup under a specified group.
-     * @param subGroupDTO DTO containing subgroup data (including parent groupId).
-     * @return The created SubGroupDTO.
+     * @param subGroupDTO DTO containing subgroup data (including parent groupId as UUID).
+     * @return The created SubGroupDTO with generated UUID.
      * @throws ResourceNotFoundException if the parent group is not found.
      * @throws ResourceAlreadyExistsException if subgroup name already exists within the parent group.
      */
     public SubGroupDTO createSubGroup(SubGroupDTO subGroupDTO) {
-        log.debug("Attempting to create subgroup '{}' under group ID {}", subGroupDTO.getName(), subGroupDTO.getGroupId());
-        // Find parent group
-        GroupEntity parentGroup = groupRepository.findById(subGroupDTO.getGroupId())
+        log.info("Attempting to create subgroup '{}' under group ID {}", subGroupDTO.getName(), subGroupDTO.getGroupId());
+        if (subGroupDTO.getId() != null) {
+            log.warn("ID provided for subgroup creation will be ignored.");
+            subGroupDTO.setId(null);
+        }
+        // Find parent group by UUID
+        GroupEntity parentGroup = groupRepository.findById(subGroupDTO.getGroupId()) // <<<--- Find by UUID
                 .orElseThrow(() -> {
-                     log.warn("Subgroup creation failed: Parent Group not found with ID {}", subGroupDTO.getGroupId());
-                     return new ResourceNotFoundException("Parent Group not found with ID: " + subGroupDTO.getGroupId());
-                 });
+                    log.warn("Subgroup creation failed: Parent Group not found with ID {}", subGroupDTO.getGroupId());
+                    return new ResourceNotFoundException("Parent Group not found with ID: " + subGroupDTO.getGroupId());
+                });
 
         // Check if subgroup name already exists within this group
         if (subGroupRepository.findByNameAndGroup(subGroupDTO.getName(), parentGroup).isPresent()) {
-             log.warn("Subgroup creation failed: Name '{}' already exists in group '{}'", subGroupDTO.getName(), parentGroup.getName());
-             throw new ResourceAlreadyExistsException("Subgroup with name '" + subGroupDTO.getName() + "' already exists in group '" + parentGroup.getName() + "'.");
+            log.warn("Subgroup creation failed: Name '{}' already exists in group '{}'", subGroupDTO.getName(), parentGroup.getName());
+            throw new ResourceAlreadyExistsException("Subgroup with name '" + subGroupDTO.getName() + "' already exists in group '" + parentGroup.getName() + "'.");
         }
 
-
         SubGroupEntity subGroupEntity = subGroupConverter.dtoToEntity(subGroupDTO);
-        subGroupEntity.setGroup(parentGroup); // Set the parent group relationship
+        subGroupEntity.setGroup(parentGroup); // Set relationship
 
         SubGroupEntity savedEntity = subGroupRepository.save(subGroupEntity);
-        log.info("Successfully created subgroup with ID: {} under group ID {}", savedEntity.getId(), parentGroup.getId());
+        log.info("Successfully created subgroup '{}' with ID: {} under group ID {}", savedEntity.getName(), savedEntity.getId(), parentGroup.getId());
         return subGroupConverter.entityToDTO(savedEntity);
     }
 
     /**
      * Updates an existing subgroup.
-     * @param id The ID of the subgroup to update.
-     * @param subGroupDTO DTO containing updated data (including potentially changed parent groupId).
+     * @param id The UUID of the subgroup to update.
+     * @param subGroupDTO DTO containing updated data (including potentially changed parent groupId as UUID).
      * @return The updated SubGroupDTO.
      * @throws ResourceNotFoundException if subgroup or new parent group is not found.
      * @throws ResourceAlreadyExistsException if name is changed and already exists in the target group.
      */
-    public SubGroupDTO updateSubGroup(Long id, SubGroupDTO subGroupDTO) {
-        log.debug("Attempting to update subgroup with ID: {}", id);
-        SubGroupEntity existingSubGroup = subGroupRepository.findById(id)
+    public SubGroupDTO updateSubGroup(UUID id, SubGroupDTO subGroupDTO) { // <<<--- UUID
+        log.info("Attempting to update subgroup with ID: {}", id);
+        SubGroupEntity existingSubGroup = subGroupRepository.findById(id) // <<<--- Find by UUID
                 .orElseThrow(() -> {
                     log.warn("Subgroup update failed: Subgroup not found with ID {}", id);
                     return new ResourceNotFoundException("SubGroup not found with ID: " + id);
@@ -85,24 +90,26 @@ public class SubGroupService {
         GroupEntity targetGroup;
         // Check if parent group is being changed
         if (!Objects.equals(existingSubGroup.getGroup().getId(), subGroupDTO.getGroupId())) {
-            targetGroup = groupRepository.findById(subGroupDTO.getGroupId())
+            log.debug("Parent group change detected for subgroup ID {}", id);
+            targetGroup = groupRepository.findById(subGroupDTO.getGroupId()) // <<<--- Find by UUID
                     .orElseThrow(() -> {
                         log.warn("Subgroup update failed: New parent Group not found with ID {}", subGroupDTO.getGroupId());
                         return new ResourceNotFoundException("New parent Group not found with ID: " + subGroupDTO.getGroupId());
                     });
-            existingSubGroup.setGroup(targetGroup); // Update parent group relationship
-            log.debug("Changed parent group for subgroup {} to '{}'", id, targetGroup.getName());
+            existingSubGroup.setGroup(targetGroup);
+            log.debug("Changed parent group for subgroup {} to '{}' (ID: {})", id, targetGroup.getName(), targetGroup.getId());
         } else {
-            targetGroup = existingSubGroup.getGroup(); // Use the existing group
+            targetGroup = existingSubGroup.getGroup(); // Keep existing group
         }
 
         // Check if name is being changed and if it exists in the target group
         if (!Objects.equals(existingSubGroup.getName(), subGroupDTO.getName())) {
-             if (subGroupRepository.findByNameAndGroup(subGroupDTO.getName(), targetGroup).isPresent()) {
-                 log.warn("Subgroup update failed: Name '{}' already exists in target group '{}'", subGroupDTO.getName(), targetGroup.getName());
-                 throw new ResourceAlreadyExistsException("Subgroup with name '" + subGroupDTO.getName() + "' already exists in group '" + targetGroup.getName() + "'.");
-             }
-            existingSubGroup.setName(subGroupDTO.getName()); // Update name
+            log.debug("Subgroup name change detected for ID {}: '{}' -> '{}'", id, existingSubGroup.getName(), subGroupDTO.getName());
+            if (subGroupRepository.findByNameAndGroup(subGroupDTO.getName(), targetGroup).isPresent()) {
+                log.warn("Subgroup update failed: Name '{}' already exists in target group '{}'", subGroupDTO.getName(), targetGroup.getName());
+                throw new ResourceAlreadyExistsException("Subgroup with name '" + subGroupDTO.getName() + "' already exists in group '" + targetGroup.getName() + "'.");
+            }
+            existingSubGroup.setName(subGroupDTO.getName());
         }
 
         SubGroupEntity updatedEntity = subGroupRepository.save(existingSubGroup);
@@ -111,15 +118,15 @@ public class SubGroupService {
     }
 
     /**
-     * Retrieves a subgroup by ID.
-     * @param id The ID of the subgroup.
+     * Retrieves a subgroup by its UUID.
+     * @param id The UUID of the subgroup.
      * @return The SubGroupDTO.
      * @throws ResourceNotFoundException if subgroup is not found.
      */
     @Transactional(readOnly = true)
-    public SubGroupDTO getSubGroupById(Long id) {
+    public SubGroupDTO getSubGroupById(UUID id) { // <<<--- UUID
         log.debug("Fetching subgroup by ID: {}", id);
-        return subGroupRepository.findById(id)
+        return subGroupRepository.findById(id) // <<<--- Find by UUID
                 .map(subGroupConverter::entityToDTO)
                 .orElseThrow(() -> {
                     log.warn("Subgroup retrieval failed: Subgroup not found with ID {}", id);
@@ -134,52 +141,55 @@ public class SubGroupService {
     @Transactional(readOnly = true)
     public List<SubGroupDTO> getAllSubGroups() {
         log.debug("Fetching all subgroups.");
-        return subGroupRepository.findAll().stream()
+        List<SubGroupEntity> subGroups = subGroupRepository.findAll();
+        log.info("Found {} subgroups.", subGroups.size());
+        return subGroups.stream()
                 .map(subGroupConverter::entityToDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Retrieves all subgroups belonging to a specific parent group.
-     * @param groupId The ID of the parent group.
+     * Retrieves all subgroups belonging to a specific parent group (by UUID).
+     * @param groupId The UUID of the parent group.
      * @return List of SubGroupDTOs for that group.
      * @throws ResourceNotFoundException if the parent group is not found.
      */
     @Transactional(readOnly = true)
-    public List<SubGroupDTO> getSubGroupsByGroup(Long groupId) {
+    public List<SubGroupDTO> getSubGroupsByGroup(UUID groupId) { // <<<--- UUID
         log.debug("Fetching subgroups for group ID: {}", groupId);
         // Ensure the group exists first
-        if (!groupRepository.existsById(groupId)) {
-             log.warn("Fetching subgroups failed: Parent Group not found with ID {}", groupId);
-             throw new ResourceNotFoundException("Parent Group not found with ID: " + groupId);
+        if (!groupRepository.existsById(groupId)) { // <<<--- existsById com UUID
+            log.warn("Fetching subgroups failed: Parent Group not found with ID {}", groupId);
+            throw new ResourceNotFoundException("Parent Group not found with ID: " + groupId);
         }
-        return subGroupRepository.findByGroup_Id(groupId).stream()
+        List<SubGroupEntity> subGroups = subGroupRepository.findByGroup_Id(groupId); // <<<--- findByGroup_Id com UUID
+        log.info("Found {} subgroups for group ID {}", subGroups.size(), groupId);
+        return subGroups.stream()
                 .map(subGroupConverter::entityToDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Deletes a subgroup by ID.
-     * @param id The ID of the subgroup to delete.
+     * Deletes a subgroup by its UUID.
+     * @param id The UUID of the subgroup to delete.
      * @throws ResourceNotFoundException if subgroup is not found.
      * @throws OperationNotAllowedException if the subgroup has associated people.
      */
-    public void deleteSubGroup(Long id) {
-        log.debug("Attempting to delete subgroup with ID: {}", id);
-         // Check if subgroup exists first
-        if (!subGroupRepository.existsById(id)) {
+    public void deleteSubGroup(UUID id) { // <<<--- UUID
+        log.info("Attempting to delete subgroup with ID: {}", id);
+        // Check if subgroup exists first
+        if (!subGroupRepository.existsById(id)) { // <<<--- existsById com UUID
             log.warn("Subgroup deletion failed: Subgroup not found with ID {}", id);
             throw new ResourceNotFoundException("SubGroup not found with ID: " + id);
         }
 
-
         // Check if there are people associated with this subgroup
-        if (personRepository.existsBySubGroup_Id(id)) {
+        if (personRepository.existsBySubGroup_Id(id)) { // <<<--- existsBySubGroup_Id com UUID
             log.warn("Subgroup deletion failed: Subgroup ID {} has associated people.", id);
             throw new OperationNotAllowedException("Cannot delete subgroup: Associated people exist.");
         }
 
-        subGroupRepository.deleteById(id);
+        subGroupRepository.deleteById(id); // <<<--- deleteById com UUID
         log.info("Successfully deleted subgroup with ID: {}", id);
     }
 }

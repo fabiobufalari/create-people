@@ -1,5 +1,4 @@
-// Path: src/main/java/com/bufalari/payable/auditing/AuditorAwareImpl.java
-package com.bufalari.people.auditing;
+package com.bufalari.people.auditing; // Pacote correto
 
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
@@ -17,19 +16,21 @@ public class AuditorAwareImpl implements AuditorAware<String> {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            // <<<--- ADJUST HERE / AJUSTE AQUI ---<<<
-            return Optional.of("system_payable"); // System user specific to this service
+            // <<<--- AJUSTE AQUI ---<<<
+            // Usuário padrão específico para este serviço
+            return Optional.of("system_people"); // User do sistema para este serviço
         }
 
         Object principal = authentication.getPrincipal();
         String username;
 
-        if (principal instanceof User) {
-           username = ((User) principal).getUsername();
-        } else if (principal instanceof String) {
-           username = (String) principal;
+        if (principal instanceof User userPrincipal) { // Pattern matching
+            username = userPrincipal.getUsername();
+        } else if (principal instanceof String stringPrincipal) {
+            username = stringPrincipal;
         } else {
-             return Optional.of("unknown_user");
+            // Consider logging a warning here if principal is unexpected type
+            return Optional.of("unknown_user"); // Usuário desconhecido
         }
         return Optional.of(username);
     }

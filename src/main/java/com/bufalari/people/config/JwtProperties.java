@@ -3,18 +3,21 @@ package com.bufalari.people.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component; // Use @Component or @Configuration
+import org.springframework.stereotype.Component;
 
 /**
- * Configuration properties for JWT settings.
+ * Configuration properties for JWT settings (primarily the secret key for validation).
  */
 @Getter
 @Setter
-@Component // Make it a Spring bean
-@ConfigurationProperties(prefix = "jwt")
+@Component // Torna um bean gerenciado pelo Spring
+// --- Prefixo CORRIGIDO para corresponder ao application.yaml ---
+@ConfigurationProperties(prefix = "security.jwt.token")
 public class JwtProperties {
 
-    private String secret;
-    // private long expiration; // Consider adding expiration if needed here, though validation usually happens with the key
+    // O nome da variável DEVE corresponder à chave no YAML após o prefixo
+    private String secretKey; // Mapeia security.jwt.token.secret-key
 
+    // A expiração é geralmente validada pelo JwtUtil, não precisa ser propriedade aqui
+    // private long expiration;
 }
