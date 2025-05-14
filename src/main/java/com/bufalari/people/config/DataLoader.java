@@ -15,12 +15,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Optional; // Importar Optional
+import java.util.Optional;
 import java.util.UUID;
 
 @Configuration
 @RequiredArgsConstructor
-@Profile("!test")
+@Profile("!test") // Não rodar durante testes se você tiver um application-test.yml que não precise disso
 public class DataLoader {
 
     private static final Logger log = LoggerFactory.getLogger(DataLoader.class);
@@ -44,8 +44,8 @@ public class DataLoader {
             CompanyEntity company = CompanyEntity.builder()
                     .id(DEFAULT_COMPANY_UUID)
                     .name("Default Construction Co.")
-                    // <<<--- ADICIONAR VALOR PARA BUSINESS IDENTIFICATION NUMBER ---<<<
-                    .businessIdentificationNumber("DEFAULT-BIN-001") // Exemplo de valor
+                    .businessIdentificationNumber("DEFAULT-BIN-001")
+                    .mainActivity("General Construction Services") // <<<--- DEFINIR MAIN_ACTIVITY
                     .country("Canada")
                     .province("Nova Scotia")
                     .city("Halifax")

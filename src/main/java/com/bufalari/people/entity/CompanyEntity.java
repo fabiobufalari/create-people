@@ -16,7 +16,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "companies", uniqueConstraints = {
     @UniqueConstraint(columnNames = "name", name = "uk_company_name"),
-    // Adicionar unique constraint para business_identification_number se ele deve ser único
     @UniqueConstraint(columnNames = "business_identification_number", name = "uk_company_business_id")
 })
 public class CompanyEntity extends AuditableBaseEntity {
@@ -29,9 +28,12 @@ public class CompanyEntity extends AuditableBaseEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    // <<<--- ADICIONAR/VERIFICAR ESTE CAMPO ---<<<
     @Column(name = "business_identification_number", nullable = false, unique = true, length = 50)
-    private String businessIdentificationNumber; // Ex: CNPJ, EIN, etc.
+    private String businessIdentificationNumber;
+
+    // <<<--- ADICIONAR/VERIFICAR ESTE CAMPO ---<<<
+    @Column(name = "main_activity", nullable = false, length = 255) // Assumindo que a coluna é main_activity e não pode ser nula
+    private String mainActivity; // Atividade principal da empresa
 
     @Column(length = 100)
     private String country;
@@ -42,7 +44,7 @@ public class CompanyEntity extends AuditableBaseEntity {
     @Column(length = 100)
     private String city;
 
-    @Column(name = "foundation_date", nullable = false) // Já corrigido para ter nullable = false
+    @Column(name = "foundation_date", nullable = false)
     private LocalDate foundationDate;
 
     @Override
