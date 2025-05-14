@@ -1,6 +1,6 @@
 package com.bufalari.people.config;
 
-import com.bufalari.people.entity.CompanyEntity; // Import correto
+import com.bufalari.people.entity.CompanyEntity;
 import com.bufalari.people.entity.GroupEntity;
 import com.bufalari.people.entity.SubGroupEntity;
 import com.bufalari.people.repository.CompanyRepository;
@@ -14,48 +14,48 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID; // <<<--- IMPORT UUID
+import java.time.LocalDate; // <<<--- IMPORTAR LocalDate
+import java.util.Optional;
+import java.util.UUID;
 
 @Configuration
 @RequiredArgsConstructor
-@Profile("!test") // Não rodar durante testes unitários/integração
+@Profile("!test")
 public class DataLoader {
 
     private static final Logger log = LoggerFactory.getLogger(DataLoader.class);
 
     private final GroupRepository groupRepository;
     private final SubGroupRepository subGroupRepository;
-    private final CompanyRepository companyRepository; // Adicionado repositório
+    private final CompanyRepository companyRepository;
 
-    // Definir UUIDs fixos para referência (CUIDADO: usar apenas para dados iniciais controlados)
     private static final UUID DEFAULT_COMPANY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID CLIENT_GROUP_UUID = UUID.fromString("00000000-0000-0000-0000-000000000100");
     private static final UUID EMPLOYEE_GROUP_UUID = UUID.fromString("00000000-0000-0000-0000-000000000200");
     private static final UUID SUPPLIER_GROUP_UUID = UUID.fromString("00000000-0000-0000-0000-000000000300");
-    // Adicione mais UUIDs fixos para subgrupos se necessário
 
     @PostConstruct
-    @Transactional // Garante atomicidade
+    @Transactional
     public void loadInitialData() {
-        log.info("Checking and loading initial data...");
+        log.info("Checking and loading initial data for create-people-service...");
 
-        // Empresa Padrão (com UUID fixo)
-        if (!companyRepository.existsById(DEFAULT_COMPANY_UUID)) {
+        // Empresa Padrão
+        CompanyEntity defaultCompany = companyRepository.findById(DEFAULT_COMPANY_UUID).orElseGet(() -> {
             CompanyEntity company = CompanyEntity.builder()
-                    .id(DEFAULT_COMPANY_UUID) // Define o ID manualmente
+                    .id(DEFAULT_COMPANY_UUID)
                     .name("Default Construction Co.")
                     .country("Canada")
                     .province("Nova Scotia")
                     .city("Halifax")
-                    // Campos de auditoria serão preenchidos automaticamente
+                    .foundationDate(LocalDate.of(2000, 1, 1)) // <<<--- DEFINIR FOUNDATION_DATE
                     .build();
-            companyRepository.save(company);
-            log.info("Created default company: {} with ID {}", company.getName(), company.getId());
-        } else {
-            log.debug("Default company with ID {} already exists.", DEFAULT_COMPANY_UUID);
-        }
+            log.info("Creating default company: {} with ID {}", company.getName(), company.getId());
+            return companyRepository.save(company);
+        });
+        log.debug("Default company '{}' (ID: {}) available.", defaultCompany.getName(), defaultCompany.getId());
 
-        // Grupos Padrão (com UUIDs fixos)
+
+        // Grupos Padrão
         GroupEntity clientGroup = loadGroupIfNotExists("Clientes", "CLIENT", CLIENT_GROUP_UUID);
         GroupEntity employeeGroup = loadGroupIfNotExists("Funcionários", "EMPLOYEE", EMPLOYEE_GROUP_UUID);
         loadGroupIfNotExists("Fornecedores", "SUPPLIER", SUPPLIER_GROUP_UUID);
@@ -65,7 +65,7 @@ public class DataLoader {
             loadSubGroupIfNotExists("Cliente Pessoa Física", clientGroup);
             loadSubGroupIfNotExists("Cliente Pessoa Jurídica", clientGroup);
         } else {
-            log.warn("Could not find 'Clientes' group (ID {}) to add subgroups.", CLIENT_GROUP_UUID);
+            log.warn("Could not find 'Clientes' group (intended ID {}) to add subgroups.", CLIENT_GROUP_UUID);
         }
 
         // Subgrupos de Funcionários
@@ -74,44 +74,44 @@ public class DataLoader {
             loadSubGroupIfNotExists("Mestre de Obras", employeeGroup);
             loadSubGroupIfNotExists("Administrativo", employeeGroup);
         } else {
-            log.warn("Could not find 'Funcionários' group (ID {}) to add subgroups.", EMPLOYEE_GROUP_UUID);
+            log.warn("Could not find 'Funcionários' group (intended ID {}) to add subgroups.", EMPLOYEE_GROUP_UUID);
         }
 
-        log.info("Initial data loading complete.");
+        log.info("Initial data loading for create-people-service complete.");
     }
 
     private GroupEntity loadGroupIfNotExists(String name, String type, UUID fixedId) {
-        if (!groupRepository.existsById(fixedId)) {
-            // Verifica se o nome já existe (pode acontecer se o ID for diferente mas o nome igual)
-            if (groupRepository.findByName(name).isPresent()) {
-                log.warn("Group with name '{}' already exists but with a different ID. Skipping creation for fixed ID {}.", name, fixedId);
-                return groupRepository.findByName(name).get(); // Retorna o existente pelo nome
+        return groupRepository.findById(fixedId).orElseGet(() -> {
+            // Verifica se já existe pelo nome para evitar duplicidade de nome com ID diferente
+            Optional<GroupEntity> existingByName = groupRepository.findByName(name);
+            if (existingByName.isPresent()) {
+                log.warn("Group with name '{}' already exists with ID {}. Using existing.", name, existingByName.get().getId());
+                return existingByName.get();
             }
             GroupEntity group = GroupEntity.builder()
-                    .id(fixedId) // Define o ID fixo
+                    .id(fixedId)
                     .name(name)
                     .type(type)
                     .build();
-            group = groupRepository.save(group);
-            log.info("Created group: {} with ID {}", name, fixedId);
-            return group;
-        } else {
-            log.debug("Group '{}' with ID {} already exists.", name, fixedId);
-            return groupRepository.findById(fixedId).orElse(null); // Retorna o existente pelo ID
-        }
+            log.info("Creating group: {} with ID {}", name, fixedId);
+            return groupRepository.save(group);
+        });
     }
 
     private void loadSubGroupIfNotExists(String name, GroupEntity parentGroup) {
+        if (parentGroup == null) {
+            log.warn("Cannot load subgroup '{}' because parent group is null.", name);
+            return;
+        }
         // Verifica se o subgrupo com este nome existe *dentro deste grupo específico*
         boolean exists = subGroupRepository.findByNameAndGroup(name, parentGroup).isPresent();
         if (!exists) {
             SubGroupEntity subGroup = SubGroupEntity.builder()
                     .name(name)
                     .group(parentGroup)
-                    // ID será gerado automaticamente (não usamos fixo para subgrupos neste exemplo)
                     .build();
-            subGroup = subGroupRepository.save(subGroup);
-            log.info("Created subgroup '{}' (ID: {}) under group '{}'", name, subGroup.getId(), parentGroup.getName());
+            subGroupRepository.save(subGroup);
+            log.info("Created subgroup '{}' under group '{}'", name, parentGroup.getName());
         } else {
             log.debug("Subgroup '{}' under group '{}' already exists.", name, parentGroup.getName());
         }

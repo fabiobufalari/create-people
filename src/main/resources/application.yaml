@@ -7,7 +7,8 @@
 # =========================================
 server:
   port: 8082 # Porta deste serviço (exemplo)
-
+  servlet:
+    context-path: /api # <<< MANTIDO O CONTEXT PATH /api
 # =========================================
 # Spring Boot Application Configuration
 # =========================================
