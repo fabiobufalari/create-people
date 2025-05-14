@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate; // <<<--- IMPORTAR LocalDate
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.Optional; // Importar Optional
 import java.util.UUID;
 
 @Configuration
@@ -44,10 +44,12 @@ public class DataLoader {
             CompanyEntity company = CompanyEntity.builder()
                     .id(DEFAULT_COMPANY_UUID)
                     .name("Default Construction Co.")
+                    // <<<--- ADICIONAR VALOR PARA BUSINESS IDENTIFICATION NUMBER ---<<<
+                    .businessIdentificationNumber("DEFAULT-BIN-001") // Exemplo de valor
                     .country("Canada")
                     .province("Nova Scotia")
                     .city("Halifax")
-                    .foundationDate(LocalDate.of(2000, 1, 1)) // <<<--- DEFINIR FOUNDATION_DATE
+                    .foundationDate(LocalDate.of(2000, 1, 1))
                     .build();
             log.info("Creating default company: {} with ID {}", company.getName(), company.getId());
             return companyRepository.save(company);
@@ -82,7 +84,6 @@ public class DataLoader {
 
     private GroupEntity loadGroupIfNotExists(String name, String type, UUID fixedId) {
         return groupRepository.findById(fixedId).orElseGet(() -> {
-            // Verifica se já existe pelo nome para evitar duplicidade de nome com ID diferente
             Optional<GroupEntity> existingByName = groupRepository.findByName(name);
             if (existingByName.isPresent()) {
                 log.warn("Group with name '{}' already exists with ID {}. Using existing.", name, existingByName.get().getId());
@@ -103,7 +104,6 @@ public class DataLoader {
             log.warn("Cannot load subgroup '{}' because parent group is null.", name);
             return;
         }
-        // Verifica se o subgrupo com este nome existe *dentro deste grupo específico*
         boolean exists = subGroupRepository.findByNameAndGroup(name, parentGroup).isPresent();
         if (!exists) {
             SubGroupEntity subGroup = SubGroupEntity.builder()

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component // Torna um bean gerenciado pelo Spring
-// --- Prefixo CORRIGIDO para corresponder ao application.yaml ---
+// --- Prefixo CORRIGIDO para corresponder ao application.yml ---
 @ConfigurationProperties(prefix = "security.jwt.token")
 public class JwtProperties {
 

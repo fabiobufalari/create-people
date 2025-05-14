@@ -1,0 +1,75 @@
+# ===================================================================
+# Spring Boot Test Configuration for create-people-service
+# ===================================================================
+
+# =========================================
+# Server Configuration (pode ser omitido para testes se não relevante)
+# =========================================
+# server:
+#   port: 0 # Usa uma porta aleatória para testes, evitando conflitos
+
+# =========================================
+# Spring Boot Application Configuration for Tests
+# =========================================
+spring:
+  application:
+    name: create-people-service-test
+  # Configuração do H2 in-memory database para testes
+  datasource:
+    url: jdbc:h2:mem:create_people_test_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;NON_KEYWORDS=USER # Adicionado NON_KEYWORDS=USER
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect # Usar dialeto H2 para compatibilidade
+    hibernate:
+      ddl-auto: create-drop # Recria o schema a cada execução de teste (bom para isolamento)
+    show-sql: true # Mostrar SQL nos testes pode ser útil para debug
+    properties:
+      hibernate:
+        format_sql: true
+        # dialect: org.hibernate.dialect.H2Dialect # Também pode ser definido aqui
+  # Desabilitar o DataLoader de produção nos testes (já feito com @Profile("!test") no DataLoader)
+  # Se o DataLoader não tivesse @Profile, você poderia desabilitar beans específicos:
+  # main:
+  #   allow-bean-definition-overriding: true # Se precisar sobrescrever beans
+
+# =========================================
+# External Service URLs for Tests (Mocked or Test Instances)
+# =========================================
+authentication:
+  service:
+    url: http://localhost:9998/api # URL mock/teste para o Auth Service. Ajuste se usar WireMock ou similar.
+
+# =========================================
+# JWT Configuration for Tests
+# =========================================
+security:
+  jwt:
+    token:
+      # Para testes, use uma chave fixa e segura.
+      # IMPORTANTE: Deve ter pelo menos 256 bits (32 bytes UTF-8) para HS256.
+      secret-key: "a-fixed-super-secure-test-secret-key-for-create-people-32bytes-long"
+
+# =========================================
+# Geocoding Configuration for Tests
+# =========================================
+geocoding:
+  api:
+    url: http://localhost:9997/maps/api/geocode/json # URL mock para Geocoding (ex: WireMock)
+    key: "MOCK_GEOCODING_API_KEY_FOR_TESTS"
+    timeout: 1000 # Timeout menor para testes
+    retries: 1
+    initialInterval: 100
+    maxInterval: 200
+    maxAttempts: 2
+
+# =========================================
+# Logging Configuration for Tests
+# =========================================
+logging:
+  level:
+    com.bufalari.people: DEBUG
+    org.springframework.security: INFO # Mantenha INFO ou DEBUG para testes de segurança
+    org.hibernate.SQL: DEBUG # Útil para ver SQLs geradas nos testes
+    # feign.Logger: DEBUG # Se quiser ver logs do Feign
