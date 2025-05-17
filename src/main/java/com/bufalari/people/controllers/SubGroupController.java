@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID; // <<<--- IMPORT UUID
 
 @RestController
-@RequestMapping("/api/subgroups")
+@RequestMapping("/create-people/subgroups")
 @RequiredArgsConstructor
 @Tag(name = "SubGroup Management", description = "Endpoints for managing person subgroups")
 @SecurityRequirement(name = "bearerAuth") // Aplica segurança a todos

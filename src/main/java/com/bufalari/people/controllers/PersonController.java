@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/persons")
+@RequestMapping("/create-people/persons")
 @RequiredArgsConstructor
 @Tag(name = "Person Management", description = "Endpoints for creating, retrieving, updating, and deleting people")
 @SecurityRequirement(name = "bearerAuth")

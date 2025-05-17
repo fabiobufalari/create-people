@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID; // <<<--- IMPORT UUID
 
 @RestController
-@RequestMapping("/api/groups")
+@RequestMapping("/create-people/groups")
 @RequiredArgsConstructor
 @Tag(name = "Group Management", description = "Endpoints for managing person groups")
 @SecurityRequirement(name = "bearerAuth") // Aplica segurança a todos os endpoints
