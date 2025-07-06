@@ -1,0 +1,71 @@
+# Test configuration for create-people service
+server:
+  port: 8082
+
+spring:
+  application:
+    name: create-people-service
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
+# Mock external service URLs for testing
+authentication:
+  service:
+    url: http://localhost:8082
+
+# JWT Configuration for testing
+security:
+  jwt:
+    token:
+      secret-key: test-secret-key-for-development-only-change-in-production
+
+# Mock geocoding configuration
+geocoding:
+  api:
+    url: http://localhost:8080/mock
+    key: test-key
+    timeout: 5000
+    retries: 3
+    initialInterval: 1000
+    maxInterval: 5000
+    maxAttempts: 3
+
+# Logging
+logging:
+  level:
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    com.bufalari.people: DEBUG
+
+# Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+

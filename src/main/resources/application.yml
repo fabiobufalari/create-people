@@ -28,8 +28,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  messages: # Configuração i18n (se mantida)
-    basename: messages/messages # Verificar caminho
+  messages: # Configuração i18n
+    basename: i18n/messages # Caminho correto para os arquivos
     encoding: UTF-8
     fallback-to-system-locale: false
 

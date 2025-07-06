@@ -13,6 +13,8 @@ import jakarta.annotation.PostConstruct; // For initializing key
 import java.nio.charset.StandardCharsets; // For UTF-8 encoding
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -79,8 +81,7 @@ public class JwtService {
         return signInKey;
     }
 
-    // --- Token Generation Methods (If this service were also creating tokens) ---
-    /*
+    // --- Token Generation Methods ---
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -90,9 +91,8 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Example: 10 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-    */
 }
