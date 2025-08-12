@@ -59,7 +59,7 @@ geocoding:
     retries: ${GEOCODING_API_RETRIES}
     initialInterval: ${GEOCODING_API_INITIAL_INTERVAL}
     maxInterval: ${GEOCODING_API_MAX_INTERVAL}
-    maxAttempts: ${MASX_ATTEMPTS} # Revisar se é 3 ou 4 (1 initial + retries)
+    maxAttempts: ${MAX_ATTEMPTS} # Revisar se é 3 ou 4 (1 initial + retries)
 #geocoding:
 #  api:
 #    url: "https://maps.googleapis.com/maps/api/geocode/json"
